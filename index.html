@@ -25,4 +25,138 @@ input[type=number] {
 button { width: 100%; padding: 14px; background-color: #7c3aed; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; transition: background-color 0.2s ease; margin-top: 15px; }
 button:hover { background-color: #6d28d9; }
 #loading, #regForm { display: none; }
-.status-msg { font-size: 16px; font-weight: bold; color: #10b981; margin-top: 25px
+.status-msg { font-size: 16px; font-weight: bold; color: #10b981; margin-top: 25px; line-height: 1.5; }
+.error-msg { color: #ef4444; }
+.kvkk-box { text-align: left; margin: 20px 0 10px 0; font-size: 13px; display: flex; align-items: flex-start; color: #9ca3af; }
+.kvkk-box input { width: auto; margin-top: 3px; margin-right: 10px; cursor: pointer; }
+a { color: #a78bfa; text-decoration: none; font-weight: 500; }
+a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+<h2>Ders Yoklama Sistemi</h2>
+<div id="loading">İşleminiz yapılıyor, lütfen bekleyin...</div>
+<div id="regForm">
+<p>Bu cihazdan ilk kez giriş yapıyorsunuz. Lütfen bilgilerinizi bir defaya mahsus giriniz.</p>
+<input type="text" id="name" placeholder="Ad Soyad" required>
+<input type="number" id="number" placeholder="Öğrenci Numarası" required>
+<div class="kvkk-box">
+<input type="checkbox" id="kvkkCheck">
+<label for="kvkkCheck">
+Veri İşleme Kuralları çerçevesinde hazırlanan 
+<a href="#" onclick="openKvkkModal(); return false;">KVKK Aydınlatma Metni</a>'ni okudum ve onaylıyorum.
+</label>
+</div>
+<button onclick="submitRegistration()">Kaydet ve Yoklama Ver</button>
+</div>
+<div id="status" class="status-msg"></div>
+</div>
+<div id="kvkkModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; backdrop-filter: blur(4px);">
+<div style="background: #141417; max-width: 450px; margin: 12% auto; padding: 30px; border-radius: 12px; text-align: left; max-height: 60vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #2e2344;">
+<h3 style="margin-top:0; color:#a78bfa;">KVKK Aydınlatma Metni</h3>
+<p><strong>Veri Sorumlusu:</strong> Hacettepe ACM Öğrenci Topluluğu / Teknik Etkinlik Koordinatörlüğü</p>
+<p>Bu form aracılığıyla toplanan Ad-Soyad ve Öğrenci Numarası verileriniz, yalnızca ders yoklamalarının takibinin yapılması ve topluluk etkinlik katılım istatistiklerinin çıkarılması amacıyla işlenmektedir.</p>
+<p><strong>Veri Aktarımı:</strong> Toplanan kişisel veriler üçüncü taraf şahıslarla ticari amaçlarla kesinlikle paylaşılmamakta, tamamen sistemin çalışması için güvenli yerel veritabanı altyapısında muhafaza edilmektedir.</p>
+<p>Formu onaylayarak verilerinizin bu doğrultuda işlenmesini kabul etmiş sayılırsınız.</p>
+<button onclick="closeKvkkModal()" style="background: #374151; width: auto; padding: 8px 18px; font-size: 14px; margin-top: 10px; border:none; color:white; border-radius:4px; cursor:pointer;">Kapat</button>
+</div>
+</div>
+<script>
+const SUPABASE_URL = "https://hghawbicjtcvsttmqdbf.supabase.co"; 
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaGF3YmljanRjdnN0dG1xZGJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NzM4MDQsImV4cCI6MjA5ODE0OTgwNH0.Vimz3gU8PFITQKMIcCzMU6DTFRN0B8JIqDmJsmBndGQ";
+
+window.onload = function() {
+const savedNumber = localStorage.getItem('studentNumber');
+const bugun = new Date().toISOString().split('T')[0];
+const sonYoklamaTarihi = localStorage.getItem('sonYoklamaTarihi');
+
+if (savedNumber) {
+if (sonYoklamaTarihi === bugun) {
+showStatus("<span class='error-msg'>Bu ders için yoklama kaydınız zaten mevcut.</span>");
+} else {
+showLoading();
+recordAttendance(savedNumber);
+}
+} else {
+document.getElementById('regForm').style.display = 'block';
+}
+};
+
+async function recordAttendance(number) {
+try {
+const response = await fetch(SUPABASE_URL + '/rest/v1/yoklama', {
+method: 'POST',
+headers: {
+'apikey': SUPABASE_KEY,
+'Authorization': 'Bearer ' + SUPABASE_KEY,
+'Content-Type': 'application/json'
+},
+body: JSON.stringify({ 
+ogrenci_numarasi: number,
+yoklama_tarihi: new Date().toISOString().split('T')[0]
+})
+});
+hideLoading();
+if (response.ok) {
+localStorage.setItem('sonYoklamaTarihi', new Date().toISOString().split('T')[0]);
+showStatus("Yoklamanız başarıyla kaydedildi.<br>İyi dersler!");
+} else {
+showStatus("<span class='error-msg'>Bu ders için yoklama kaydınız zaten mevcut.</span>");
+}
+} catch (error) {
+hideLoading();
+showStatus("<span class='error-msg'>Bağlantı hatası oluştu.</span>");
+}
+}
+
+async function submitRegistration() {
+const name = document.getElementById('name').value.trim();
+const number = document.getElementById('number').value.trim();
+const kvkkChecked = document.getElementById('kvkkCheck').checked;
+
+if (!name || !number) {
+alert("Lütfen tüm alanları doldurun!");
+return;
+}
+if (!kvkkChecked) {
+alert("Lütfen devam etmek için KVKK Aydınlatma Metni'ni onaylayın.");
+return;
+}
+
+document.getElementById('regForm').style.display = 'none';
+showLoading();
+
+try {
+const regResponse = await fetch(SUPABASE_URL + '/rest/v1/kayitlar', {
+method: 'POST',
+headers: {
+'apikey': SUPABASE_KEY,
+'Authorization': 'Bearer ' + SUPABASE_KEY,
+'Content-Type': 'application/json'
+},
+body: JSON.stringify({ isim_soyisim: name, ogrenci_numarasi: number })
+});
+
+if (regResponse.ok) {
+localStorage.setItem('studentNumber', number);
+await recordAttendance(number);
+} else {
+hideLoading();
+document.getElementById('regForm').style.display = 'block';
+alert("Kayıt başarısız. Bu numara daha önce sisteme kaydedilmiş olabilir.");
+}
+} catch (error) {
+hideLoading();
+showStatus("<span class='error-msg'>Sistem hatası meydana geldi.</span>");
+}
+}
+
+function showLoading() { document.getElementById('loading').style.display = 'block'; }
+function hideLoading() { document.getElementById('loading').style.display = 'none'; }
+function showStatus(msg) { document.getElementById('status').innerHTML = msg; }
+function openKvkkModal() { document.getElementById('kvkkModal').style.display = 'block'; }
+function closeKvkkModal() { document.getElementById('kvkkModal').style.display = 'none'; }
+</script>
+</body>
+</html>
