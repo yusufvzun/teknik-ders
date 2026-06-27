@@ -57,8 +57,8 @@
 </div>
 
 <script>
-  // CONFIGURATION - Supabase Bilgilerini Buraya Yaz
-  const SUPABASE_URL = "https://hghawbicjtcvsttmqdbf.supabase.co/rest/v1/"; 
+  // CONFIGURATION - Düzeltildi
+  const SUPABASE_URL = "https://hghawbicjtcvsttmqdbf.supabase.co"; 
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaGF3YmljanRjdnN0dG1xZGJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NzM4MDQsImV4cCI6MjA5ODE0OTgwNH0.Vimz3gU8PFITQKMIcCzMU6DTFRN0B8JIqDmJsmBndGQ";
 
   window.onload = function() {
@@ -68,11 +68,11 @@
       showLoading();
       recordAttendance(savedNumber);
     } else {
-      document.getElementById('regForm').style.style.display = 'block';
+      // Çift style hatası düzeltildi
+      document.getElementById('regForm').style.display = 'block';
     }
   };
 
-  // Sadece Yoklama Tablosuna Ekleme Fonksiyonu
   async function recordAttendance(number) {
     try {
       const response = await fetch(`${SUPABASE_URL}/rest/v1/yoklama`, {
@@ -97,7 +97,6 @@
     }
   }
 
-  // İlk Kez Kayıt Olma Fonksiyonu
   async function submitRegistration() {
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
@@ -118,7 +117,6 @@
     showLoading();
 
     try {
-      // 1. Bilgileri Kayitlar tablosuna gönder
       const regResponse = await fetch(`${SUPABASE_URL}/rest/v1/kayitlar`, {
         method: 'POST',
         headers: {
@@ -130,9 +128,7 @@
       });
 
       if (regResponse.ok) {
-        // Cihaz hafızasına numarayı kilitle
         localStorage.setItem('studentNumber', number);
-        // 2. Anlık yoklamasını tetikle
         await recordAttendance(number);
       } else {
         hideLoading();
