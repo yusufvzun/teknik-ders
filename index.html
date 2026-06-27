@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ders Yoklama Sistemi</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; text-align: center; }
+    .container { max-width: 400px; margin: 40px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+    button:hover { background-color: #0056b3; }
+    #loading, #regForm { display: none; }
+    .status-msg { font-size: 18px; font-weight: bold; color: #28a745; margin-top: 20px; line-height: 1.4; }
+    .kvkk-box { text-align: left; margin: 15px 0; font-size: 13px; display: flex; align-items: flex-start; }
+    .kvkk-box input { width: auto; margin-top: 3px; margin-right: 8px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Ders Yoklama Sistemi</h2>
+  
+  <div id="loading">İşleminiz yapılıyor, lütfen bekleyin...</div>
+
+  <div id="regForm">
+    <p>Bu cihazdan ilk kez giriş yapıyorsunuz. Lütfen bilgilerinizi bir defaya mahsus giriniz.</p>
+    <input type="text" id="name" placeholder="Ad Soyad" required>
+    <input type="email" id="email" placeholder="Kişisel E-posta" required>
+    <input type="number" id="number" placeholder="Öğrenci Numarası" required>
+    
+    <div class="kvkk-box">
+      <input type="checkbox" id="kvkkCheck">
+      <label for="kvkkCheck">
+        Veri İşleme Kuralları çerçevesinde hazırlanan 
+        <a href="#" onclick="openKvkkModal(); return false;" style="color: #007bff; text-decoration: underline;">
+          KVKK Aydınlatma Metni
+        </a>'ni okudum ve onaylıyorum.
+      </label>
+    </div>
+
+    <button onclick="submitRegistration()">Kaydet ve Yoklama Ver</button>
+  </div>
+
+  <div id="status" class="status-msg"></div>
+</div>
+
+<div id="kvkkModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+  <div style="background: white; max-width: 450px; margin: 15% auto; padding: 25px; border-radius: 8px; text-align: left; max-height: 60vh; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+    <h3 style="margin-top:0;">KVKK Aydınlatma Metni</h3>
+    <p><strong>Veri Sorumlusu:</strong> Ders Koordinatörlüğü / Topluluk Yönetimi</p>
+    <p>Bu form aracılığıyla toplanan Ad-Soyad, Öğrenci Numarası ve E-posta verileriniz, yalnızca ders yoklamalarının takibinin yapılması ve katılım istatistiklerinin çıkarılması amacıyla işlenmektedir.</p>
+    <p><strong>Veri Aktarımı:</strong> Toplanan kişisel veriler üçüncü taraf şahıslarla ticari amaçlarla paylaşılmamakta, tamamen sistemin çalışması için güvenli veritabanı altyapısında muhafaza edilmektedir.</p>
+    <p>Formu onaylayarak verilerinizin bu doğrultuda işlenmesini kabul etmiş sayılırsınız.</p>
+    <button onclick="closeKvkkModal()" style="background: #6c757d; width: auto; padding: 8px 15px; font-size: 14px;">Kapat</button>
+  </div>
+</div>
+
+<script>
+  // CONFIGURATION - Supabase Bilgilerini Buraya Yaz
+  const SUPABASE_URL = "https://hghawbicjtcvsttmqdbf.supabase.co/rest/v1/"; 
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaGF3YmljanRjdnN0dG1xZGJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NzM4MDQsImV4cCI6MjA5ODE0OTgwNH0.Vimz3gU8PFITQKMIcCzMU6DTFRN0B8JIqDmJsmBndGQ";
+
+  window.onload = function() {
+    const savedNumber = localStorage.getItem('studentNumber');
+    
+    if (savedNumber) {
+      showLoading();
+      recordAttendance(savedNumber);
+    } else {
+      document.getElementById('regForm').style.style.display = 'block';
+    }
+  };
+
+  // Sadece Yoklama Tablosuna Ekleme Fonksiyonu
+  async function recordAttendance(number) {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/yoklama`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ogrenci_numarasi: number })
+      });
+
+      hideLoading();
+      if (response.ok) {
+        showStatus("Yoklamanız başarıyla kaydedildi.<br>İyi dersler!");
+      } else {
+        showStatus("Yoklama kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.");
+      }
+    } catch (error) {
+      hideLoading();
+      showStatus("Bağlantı hatası oluştu.");
+    }
+  }
+
+  // İlk Kez Kayıt Olma Fonksiyonu
+  async function submitRegistration() {
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const number = document.getElementById('number').value.trim();
+    const kvkkChecked = document.getElementById('kvkkCheck').checked;
+
+    if (!name || !email || !number) {
+      alert("Lütfen tüm alanları doldurun!");
+      return;
+    }
+
+    if (!kvkkChecked) {
+      alert("Lütfen devam etmek için KVKK Aydınlatma Metni'ni onaylayın.");
+      return;
+    }
+
+    document.getElementById('regForm').style.display = 'none';
+    showLoading();
+
+    try {
+      // 1. Bilgileri Kayitlar tablosuna gönder
+      const regResponse = await fetch(`${SUPABASE_URL}/rest/v1/kayitlar`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ isim_soyisim: name, eposta: email, ogrenci_numarasi: number })
+      });
+
+      if (regResponse.ok) {
+        // Cihaz hafızasına numarayı kilitle
+        localStorage.setItem('studentNumber', number);
+        // 2. Anlık yoklamasını tetikle
+        await recordAttendance(number);
+      } else {
+        hideLoading();
+        document.getElementById('regForm').style.display = 'block';
+        alert("Kayıt başarısız. Bu numara daha önce sisteme kaydedilmiş olabilir.");
+      }
+    } catch (error) {
+      hideLoading();
+      showStatus("Sistem hatası meydana geldi.");
+    }
+  }
+
+  function showLoading() { document.getElementById('loading').style.display = 'block'; }
+  function hideLoading() { document.getElementById('loading').style.display = 'none'; }
+  function showStatus(msg) { document.getElementById('status').innerHTML = msg; }
+  function openKvkkModal() { document.getElementById('kvkkModal').style.display = 'block'; }
+  function closeKvkkModal() { document.getElementById('kvkkModal').style.display = 'none'; }
+</script>
+
+</body>
+</html>
