@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoklama Sistemi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans text-gray-800 flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100">
+        
+        <!-- BİLDİRİM MESAJI -->
+        <div id="message-container" class="mb-4 hidden text-sm font-medium p-3.5 rounded-xl text-center"></div>
+
+        <!-- 1. ANA EKRAN (ÖĞRENCİLER İÇİN DERS SEÇİMİ - DOSYA 1 MANTIĞI) -->
+        <div id="home-view">
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 font-bold text-xl">
+                    📋
+                </div>
+                <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Teknik Dersler Yoklama</h1>
+                <p class="text-sm text-gray-500 mt-1">Lütfen yoklamasına katılacağınız dersi seçin</p>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="studentSelectCourse('python', 'Python')" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-95 text-white font-semibold py-3.5 px-5 rounded-xl shadow-sm transition flex items-center justify-between">
+                    <span>Python</span><span>&rarr;</span>
+                </button>
+                <button onclick="studentSelectCourse('competitive_programming', 'Competitive Programming')" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:opacity-95 text-white font-semibold py-3.5 px-5 rounded-xl shadow-sm transition flex items-center justify-between">
+                    <span>Competitive Programming</span><span>&rarr;</span>
+                </button>
+                <button onclick="studentSelectCourse('cpp', 'C++')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 text-white font-semibold py-3.5 px-5 rounded-xl shadow-sm transition flex items-center justify-between">
+                    <span>C++</span><span>&rarr;</span>
+                </button>
+                <button onclick="studentSelectCourse('photoshop', 'Photoshop')" class="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:opacity-95 text-white font-semibold py-3.5 px-5 rounded-xl shadow-sm transition flex items-center justify-between">
+                    <span>Photoshop</span><span>&rarr;</span>
+                </button>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
+                <button onclick="enterTeacherMode()" class="hover:text-indigo-600 font-semibold">⚙️ Admin Panel</button>
+                <button onclick="clearUser()" class="hover:text-red-500 underline">Bilgilerimi Sıfırla</button>
+            </div>
+        </div>
+
+        <!-- 2. EĞİTMEN PANELİ (AÇ/KAPA KONTROLLERİ) -->
+        <div id="teacher-view" class="hidden">
+            <button onclick="goHome()" class="text-sm text-gray-500 hover:text-gray-800 font-medium mb-4 inline-flex items-center gap-1">
+                &larr; Ana Ekrana Dön
+            </button>
+            <div class="text-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Admin Panel</h2>
+                <p class="text-xs text-gray-500 mt-1">Derslerin yoklamasını açıp kapatabilirsiniz.</p>
+            </div>
+            <div id="teacher-courses-list" class="space-y-4">
+                <!-- JS ile Doldurulacak -->
+                <p class="text-center text-sm text-gray-500">Durumlar yükleniyor...</p>
+            </div>
+        </div>
+
+        <!-- 3. ÖĞRENCİ YOKLAMA FORMU / ONAY EKRANI -->
+        <div id="course-view" class="hidden">
+            <button onclick="goHome()" class="text-sm text-gray-500 hover:text-gray-800 font-medium mb-4 inline-flex items-center gap-1">
+                &larr; Derslere Dön
+            </button>
+            
+            <div class="text-center mb-6">
+                <span class="inline-block text-xs font-semibold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full mb-2">Haftalık Yoklama</span>
+                <h2 id="course-title" class="text-xl font-bold text-gray-900">Ders Başlığı</h2>
+            </div>
+
+            <div id="direct-join-section" class="hidden">
+                <div class="bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100 text-sm">
+                    <p class="text-gray-500 text-xs mb-1">Giriş Yapan Öğrenci:</p>
+                    <p id="student-name-display" class="font-semibold text-gray-800"></p>
+                    <p id="student-id-display" class="text-gray-600 text-xs mt-0.5"></p>
+                </div>
+                <button onclick="joinDirectly()" id="direct-join-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 px-4 rounded-xl shadow transition flex items-center justify-center gap-2">
+                    ✓ Yoklamaya Katıl
+                </button>
+            </div>
+
+            <div id="form-section" class="hidden">
+                <p class="text-xs text-gray-500 mb-3 text-center">İlk katılımınız olduğu için bilgilerinizi bir defa kaydedin:</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Adınız</label>
+                        <input type="text" id="input-name" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Soyadınız</label>
+                        <input type="text" id="input-surname" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Öğrenci Numarası</label>
+                        <input type="text" id="input-student-id" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <button onclick="submitNewUser()" id="form-submit-btn" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow transition">
+                        Bilgileri Kaydet ve Katıl
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const SUPABASE_BASE_URL = 'https://hghawbicjtcvsttmqdbf.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaGF3YmljanRjdnN0dG1xZGJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NzM4MDQsImV4cCI6MjA5ODE0OTgwNH0.Vimz3gU8PFITQKMIcCzMU6DTFRN0B8JIqDmJsmBndGQ';
+        const TEACHER_PIN = '1234'; 
+
+        const courses = [
+            { id: 'python', name: 'Python' },
+            { id: 'competitive_programming', name: 'Competitive Programming' },
+            { id: 'cpp', name: 'C++' },
+            { id: 'photoshop', name: 'Photoshop' }
+        ];
+
+        let currentCourseId = '';
+
+        // API YARDIMCISI
+        async function fetchSupabase(endpoint, method = 'GET', body = null) {
+            const options = {
+                method: method,
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+            if (body) options.body = JSON.stringify(body);
+            if (method === 'POST' || method === 'PATCH') options.headers['Prefer'] = 'return=minimal';
+            
+            const res = await fetch(`${SUPABASE_BASE_URL}/rest/v1/${endpoint}`, options);
+            if (!res.ok) {
+                const err = await res.json().catch(()=>({}));
+                throw new Error(err.message || 'Supabase isteği başarısız oldu.');
+            }
+            if (method === 'GET') return await res.json();
+            return true;
+        }
+
+        function showMessage(text, type) {
+            const container = document.getElementById('message-container');
+            container.innerText = text;
+            container.className = 'mb-4 text-sm font-medium p-3.5 rounded-xl text-center ' + 
+                (type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200');
+            container.classList.remove('hidden');
+        }
+
+        function hideMessage() {
+            document.getElementById('message-container').classList.add('hidden');
+        }
+
+        function goHome() {
+            document.getElementById('home-view').classList.remove('hidden');
+            document.getElementById('course-view').classList.add('hidden');
+            document.getElementById('teacher-view').classList.add('hidden');
+            hideMessage();
+        }
+
+        // ==========================================
+        // ÖĞRENCİ MANTIĞI
+        // ==========================================
+        async function studentSelectCourse(courseId, courseName) {
+            currentCourseId = courseId;
+            document.getElementById('course-title').innerText = courseName;
+            
+            hideMessage();
+
+            // Önce ders açık mı kontrol et
+            try {
+                const data = await fetchSupabase(`ders_durumlari?ders_id=eq.${courseId}&select=aktif`);
+                if (!data || data.length === 0 || !data[0].aktif) {
+                    showMessage('⚠️ Bu dersin yoklaması şu an kapalıdır.', 'error');
+                    return; // İleri gitmesine izin verme
+                }
+            } catch (e) {
+                showMessage('Veritabanına bağlanılamadı.', 'error');
+                return;
+            }
+
+            // Açıksa ekranı değiştir ve formu göster
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('course-view').classList.remove('hidden');
+            
+            const savedUserStr = localStorage.getItem('yoklama_user_' + courseId);
+            const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+
+            if (savedUser) {
+                document.getElementById('student-name-display').innerText = savedUser.name + ' ' + savedUser.surname;
+                document.getElementById('student-id-display').innerText = 'Öğrenci No: ' + savedUser.student_id;
+                document.getElementById('direct-join-section').classList.remove('hidden');
+                document.getElementById('form-section').classList.add('hidden');
+                document.getElementById('direct-join-btn').disabled = false;
+                document.getElementById('direct-join-btn').innerText = '✓ Yoklamaya Katıl';
+            } else {
+                document.getElementById('direct-join-section').classList.add('hidden');
+                document.getElementById('form-section').classList.remove('hidden');
+                document.getElementById('form-submit-btn').disabled = false;
+                document.getElementById('form-submit-btn').innerText = 'Bilgileri Kaydet ve Katıl';
+                document.getElementById('input-name').value = '';
+                document.getElementById('input-surname').value = '';
+                document.getElementById('input-student-id').value = '';
+            }
+        }
+
+        async function joinDirectly() {
+            const user = JSON.parse(localStorage.getItem('yoklama_user_' + currentCourseId));
+            if (user) {
+                await sendAttendance(user.name, user.surname, user.student_id, document.getElementById('direct-join-btn'));
+            }
+        }
+
+        async function submitNewUser() {
+            const name = document.getElementById('input-name').value.trim();
+            const surname = document.getElementById('input-surname').value.trim();
+            const studentId = document.getElementById('input-student-id').value.trim();
+
+            if (!name || !surname || !studentId) {
+                showMessage('Lütfen tüm alanları doldurun.', 'error');
+                return;
+            }
+
+            localStorage.setItem('yoklama_user_' + currentCourseId, JSON.stringify({ name, surname, student_id: studentId }));
+            await sendAttendance(name, surname, studentId, document.getElementById('form-submit-btn'));
+        }
+
+        async function sendAttendance(name, surname, studentId, btnElement) {
+            btnElement.disabled = true;
+            const originalText = btnElement.innerText;
+            btnElement.innerText = 'Gönderiliyor...';
+            hideMessage();
+
+            try {
+                // Ekstra Güvenlik: Göndermeden hemen önce yoklama hala açık mı diye tekrar bak
+                const check = await fetchSupabase(`ders_durumlari?ders_id=eq.${currentCourseId}&select=aktif`);
+                if (!check[0]?.aktif) {
+                    throw new Error("Eğitmen yoklamayı kapattı!");
+                }
+
+                await fetchSupabase(currentCourseId, 'POST', {
+                    isim: name,
+                    soyisim: surname,
+                    ogrenci_no: studentId
+                });
+
+                showMessage('🎉 Yoklamaya başarıyla katıldınız!', 'success');
+                document.getElementById('direct-join-section').classList.add('hidden');
+                document.getElementById('form-section').classList.add('hidden');
+
+            } catch (err) {
+                showMessage('Kayıt başarısız: ' + (err.message || 'Lütfen bağlantınızı kontrol edin'), 'error');
+                btnElement.disabled = false;
+                btnElement.innerText = originalText;
+            }
+        }
+
+        function clearUser() {
+            if (confirm('Tarayıcıda kayıtlı tüm öğrenci bilgilerinizi silmek istiyor musunuz?')) {
+                courses.forEach(c => localStorage.removeItem('yoklama_user_' + c.id));
+                alert('Bilgileriniz silindi.');
+            }
+        }
+
+        // ==========================================
+        // EĞİTMEN MANTIĞI
+        // ==========================================
+        async function enterTeacherMode() {
+            const pass = prompt("Admin Panel Şifrenizi Girin:");
+            if (pass !== TEACHER_PIN) {
+                alert("Yanlış Şifre!");
+                return;
+            }
+            
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('teacher-view').classList.remove('hidden');
+            hideMessage();
+            await loadTeacherCourses();
+        }
+
+        async function loadTeacherCourses() {
+            const listDiv = document.getElementById('teacher-courses-list');
+            listDiv.innerHTML = '<p class="text-center text-sm text-gray-500">Durumlar yükleniyor...</p>';
+            
+            try {
+                const data = await fetchSupabase('ders_durumlari?select=*');
+                listDiv.innerHTML = '';
+                
+                courses.forEach(c => {
+                    const dbRow = data.find(d => d.ders_id === c.id);
+                    const isAktif = dbRow ? dbRow.aktif : false;
+                    
+                    listDiv.innerHTML += `
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <div>
+                                <h3 class="font-bold text-gray-800">${c.name}</h3>
+                                <p class="text-xs ${isAktif ? 'text-emerald-600 font-semibold' : 'text-gray-500'}">
+                                    Durum: ${isAktif ? 'Açık' : 'Kapalı'}
+                                </p>
+                            </div>
+                            <button onclick="toggleCourseState('${c.id}', ${!isAktif})" 
+                                class="px-4 py-2 text-sm font-semibold text-white rounded-lg transition shadow-sm ${isAktif ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'}">
+                                ${isAktif ? 'Kapat' : 'Aç'}
+                            </button>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                listDiv.innerHTML = '<p class="text-center text-sm text-red-500">Bağlantı hatası: Tabloları oluşturduğunuzdan emin olun.</p>';
+            }
+        }
+
+        async function toggleCourseState(courseId, newState) {
+            try {
+                await fetchSupabase(`ders_durumlari?ders_id=eq.${courseId}`, 'PATCH', { aktif: newState });
+                await loadTeacherCourses(); // Listeyi yenile
+            } catch (e) {
+                alert("Durum güncellenemedi: " + e.message);
+            }
+        }
+    </script>
+</body>
+</html>
