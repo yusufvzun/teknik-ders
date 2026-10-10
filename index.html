@@ -181,12 +181,28 @@
                 return;
             }
 
-            // Açıksa ekranı değiştir ve formu göster
+            // Açıksa ekranı değiştir
             document.getElementById('home-view').classList.add('hidden');
             document.getElementById('course-view').classList.remove('hidden');
             
             const savedUserStr = localStorage.getItem('yoklama_user_' + courseId);
-            const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+            let savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+
+            // Supabase'den silinmiş mi kontrolü
+            if (savedUser) {
+                try {
+                    // Bu öğrenci numarasının veritabanında kaydı var mı diye bakıyoruz
+                    const checkUser = await fetchSupabase(`${courseId}?ogrenci_no=eq.${savedUser.student_id}&select=id&limit=1`);
+                    if (!checkUser || checkUser.length === 0) {
+                        // Eğer kaydı bulunamazsa (eğitmen silmişse), yerel hafızayı temizle
+                        localStorage.removeItem('yoklama_user_' + courseId);
+                        savedUser = null;
+                        showMessage('Bilgileriniz sistemde bulunamadı veya yöneticiniz tarafından silinmiş. Lütfen tekrar form doldurunuz.', 'error');
+                    }
+                } catch (e) {
+                    // Bağlantı hatası olursa öğrencinin girişini engellememek için sessizce devam et
+                }
+            }
 
             if (savedUser) {
                 document.getElementById('student-name-display').innerText = savedUser.name + ' ' + savedUser.surname;
