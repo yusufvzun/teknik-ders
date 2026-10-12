@@ -276,8 +276,8 @@
                         <input type="text" id="input-surname" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Öğrenci Numarası</label>
-                        <input type="text" id="input-student-id" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <label for="input-student-id" class="block text-xs font-semibold text-gray-600 mb-1">Öğrenci Numarası</label>
+                        <input type="text" id="input-student-id" inputmode="numeric" autocomplete="off" aria-describedby="student-id-example student-id-error" oninput="validateStudentIdField(false)" onblur="validateStudentIdField(false)" placeholder="Ör: 2250356146" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">                        <p id="student-id-error" class="hidden mt-1 text-xs font-medium text-red-600" role="alert">Lütfen geçerli öğrenci numarası giriniz</p>
                     </div>
                     <button onclick="submitNewUser()" id="form-submit-btn" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow transition">
                         Bilgileri Kaydet ve Katıl
@@ -313,7 +313,7 @@
         const SUPABASE_BASE_URL = 'https://hghawbicjtcvsttmqdbf.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaGF3YmljanRjdnN0dG1xZGJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NzM4MDQsImV4cCI6MjA5ODE0OTgwNH0.Vimz3gU8PFITQKMIcCzMU6DTFRN0B8JIqDmJsmBndGQ';
         // Supabase Auth kullanıcı UUID'si; SQL güvenlik politikasıyla aynı olmalıdır.
-        const ADMIN_USER_ID = '0023da1a-64ca-48ab-a5f7-1753871e8d2e';
+        const ADMIN_USER_ID = '64bcfc06-6011-448b-b940-aef92a382569';
         let adminAccessToken = null; // Yalnızca bellekte tutulur.
 const courses = [
             { id: 'python', name: 'Python' },
@@ -458,6 +458,7 @@ const courses = [
                 document.getElementById('input-name').value = '';
                 document.getElementById('input-surname').value = '';
                 document.getElementById('input-student-id').value = '';
+                validateStudentIdField(false);
             }
         }
 
@@ -468,6 +469,23 @@ const courses = [
             }
         }
 
+        function validateStudentIdField(showError = true) {
+            const input = document.getElementById('input-student-id');
+            const error = document.getElementById('student-id-error');
+            if (!input || !error) return false;
+
+            const studentId = input.value.trim();
+            const isValid = studentId.length >= 8 && studentId.length <= 11;
+            error.classList.toggle('hidden', isValid || (!showError && studentId.length === 0));
+            input.setAttribute('aria-invalid', String(!isValid && studentId.length > 0));
+            input.classList.toggle('border-red-500', !isValid && studentId.length > 0);
+            if (!isValid && showError) {
+                error.classList.remove('hidden');
+                error.textContent = 'Lütfen geçerli öğrenci numarası giriniz';
+            }
+            return isValid;
+        }
+
         async function submitNewUser() {
             const name = document.getElementById('input-name').value.trim();
             const surname = document.getElementById('input-surname').value.trim();
@@ -475,6 +493,13 @@ const courses = [
 
             if (!name || !surname || !studentId) {
                 showMessage('Lütfen tüm alanları doldurun.', 'error');
+                if (!studentId) validateStudentIdField(true);
+                return;
+            }
+
+            if (!validateStudentIdField(true)) {
+                showMessage('Lütfen geçerli öğrenci numarası giriniz', 'error');
+                document.getElementById('input-student-id').focus();
                 return;
             }
 
